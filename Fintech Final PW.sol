@@ -22,12 +22,13 @@ contract APIConsumer is ChainlinkClient {
      * Create a Chainlink request to retrieve API response, find the target
      * data, then multiply by 100 (to remove decimal places from data).
      */
-    function requestVolumeData() public returns (bytes32 requestId) 
-    {
+    function requestPrice( string memory ticker ) public returns (bytes32 requestId) {
+        
         Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
         
         // Set the URL to perform the GET request on
-        request.add("get", "https://api.finage.co.uk/last/trade/stock/AMZN?apikey=API_KEY85G0HUQUCE3BIF6PVC8Z3TW7VB7AMODK");
+        request.add("get", string(abi.encodePacked("https://api.finage.co.uk/last/trade/stock/", ticker ,
+            "?apikey=API_KEY85G0HUQUCE3BIF6PVC8Z3TW7VB7AMODK")));
         request.add("path", "price");
         
         int timesAmount = 100;
