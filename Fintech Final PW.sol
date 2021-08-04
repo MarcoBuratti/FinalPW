@@ -2,25 +2,15 @@ pragma solidity ^0.6.0;
 
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 
-/**
- * THIS IS AN EXAMPLE CONTRACT WHICH USES HARDCODED VALUES FOR CLARITY.
- * PLEASE DO NOT USE THIS CODE IN PRODUCTION.
- */
 contract APIConsumer is ChainlinkClient {
     using Chainlink for Chainlink.Request;
   
-    uint256 public volume;
+    uint256 public price;
     
     address private oracle;
     bytes32 private jobId;
     uint256 private fee;
     
-    /**
-     * Network: Kovan
-     * Oracle: 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e
-     * Job ID: 29fa9aa13bf1468788b7cc4a500a45b8
-     * Fee: 0.1 LINK
-     */
     constructor() public {
         setPublicChainlinkToken();
         oracle = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
@@ -30,7 +20,7 @@ contract APIConsumer is ChainlinkClient {
     
     /**
      * Create a Chainlink request to retrieve API response, find the target
-     * data, then multiply by 1000000000000000000 (to remove decimal places from data).
+     * data, then multiply by 100 (to remove decimal places from data).
      */
     function requestVolumeData() public returns (bytes32 requestId) 
     {
@@ -38,21 +28,9 @@ contract APIConsumer is ChainlinkClient {
         
         // Set the URL to perform the GET request on
         request.add("get", "https://api.finage.co.uk/last/trade/stock/AMZN?apikey=API_KEY85G0HUQUCE3BIF6PVC8Z3TW7VB7AMODK");
-        
-        // Set the path to find the desired data in the API response, where the response format is:
-        // {"RAW":
-        //   {"ETH":
-        //    {"USD":
-        //     {
-        //      "VOLUME24HOUR": xxx.xxx,
-        //     }
-        //    }
-        //   }
-        //  }
         request.add("path", "price");
         
-        // Multiply the result by 1000000000000000000 to remove decimals
-        int timesAmount = 10**18;
+        int timesAmount = 100;
         request.addInt("times", timesAmount);
         
         // Sends the request
@@ -62,10 +40,14 @@ contract APIConsumer is ChainlinkClient {
     /**
      * Receive the response in the form of uint256
      */ 
-    function fulfill(bytes32 _requestId, uint256 _volume) public recordChainlinkFulfillment(_requestId)
+    function fulfill(bytes32 _requestId, uint256 _price) public recordChainlinkFulfillment(_requestId)
     {
-        volume = _volume;
+        price = _price;
     }
- 
-    // function withdrawLink() external {} - Implement a withdraw function to avoid locking your LINK in the contract
+    
+    function withdrawLink() public {
+        LinkTokenInterface link = LinkTokenInterface(chainlinkTokenAddress());
+        require(link.transfer(msg.sender, link.balanceOf(address(this))), "Unable to transfer");
+    }
+
 }
